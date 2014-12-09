@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Onlinekiosk-paperboy delivers your newspapers and magazines freshly every day.
