@@ -176,6 +176,13 @@ class Browser(object):
         return self.s.get(*args, **kwargs).json()
 
     def set_referer(self, func, *args, **kwargs):
+        if 'referer' in kwargs:
+            headers = { 'Referer': kwargs['referer'] }
+            if headers in kwargs:
+                kwargs['headers'].update(headers)
+            else:
+                kwargs['headers'] = headers
+            return func(*args, **kwargs)
 
         if self.last:
             headers = { 'Referer': self.last }
@@ -193,6 +200,7 @@ class Browser(object):
     def post(self, *args, **kwargs):
         logging.debug('Browser POST {}'.format(args[0]))
         return self.set_referer(self.s.post, *args, **kwargs)
+
 
 def random_sleep(min_sec=0.6, max_sec=5.3):
     st = random.uniform(min_sec, max_sec)
