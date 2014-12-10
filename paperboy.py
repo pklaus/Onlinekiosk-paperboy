@@ -100,6 +100,13 @@ def main():
         if not os.path.isdir(product_directory):
             os.makedirs(product_directory)
         for issue in list_answer['result']:
+            # We don't want the default file name (like `HB_1201_Download.pdf`)
+            # Rather construct a file name like `Ausgabe vom 21.11.2014.pdf`:
+            filename = "{title}.{formatText}".format(**issue)
+            fullpath = os.path.join(product_directory, filename)
+            if os.path.exists(fullpath):
+                logging.info("{} already downloaded... ".format(filename))
+                continue
             random_sleep()
             issue_data = {
               'action': 'customer:gotoDownload',
@@ -109,23 +116,16 @@ def main():
             issue_data.update(form_data)
             issue_response = browser.post(BASE_URL, data=issue_data, stream=True, referer=DOWNLOAD_URL)
             try:
-                filename = cd_re.search(issue_response.headers['Content-Disposition']).group(1)
+                cd_re.search(issue_response.headers['Content-Disposition']).group(1)
             except (IndexError, AttributeError, KeyError):
                 logging.warning('Something wrong with this issue: {} ?'.format(issue['title']))
-                issue_response.close()
-                continue
-            # But we don't want the default file name (like `HB_1201_Download.pdf`)
-            # Rather construct a file name like `Ausgabe vom 21.11.2014.pdf`:
-            filename = "{title}.{formatText}".format(**issue)
-            fullpath = os.path.join(product_directory, filename)
-            if os.path.exists(fullpath):
-                logging.info("{} already downloaded... ".format(filename))
                 issue_response.close()
                 continue
             logging.info("Downloading {}...".format(filename))
             with open(fullpath, 'wb') as f:
                 for chunk in issue_response.iter_content(1024):
                     f.write(chunk)
+            issue_response.close()
 
     browser.close()
 
