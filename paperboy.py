@@ -161,13 +161,15 @@ class Browser(object):
         except:
             pass
 
-    def get_json(self, *args, **kwargs):
-        # Different headers for json requests:
+    def post_json(self, *args, **kwargs):
+        # Different headers for a POST request asking for json content:
         headers = {
           'Accept': 'application/json, text/javascript, */*; q=0.01',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           'X-Requested-With': 'XMLHttpRequest',
-          'Referer': 'http://www.faz.net/e-paper/',
           'Connection': 'keep-alive',
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
         }
         try:
             kwargs['headers'].update(headers)
