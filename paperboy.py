@@ -21,6 +21,7 @@ from urllib.parse import urljoin
 import re
 
 BASE_URL = 'https://www.onlinekiosk.de/index.php'
+DOWNLOAD_URL = 'https://www.onlinekiosk.de/index.php/customer/downloads.html'
 
 def main():
     import argparse
@@ -51,7 +52,7 @@ def main():
 
     if BeautifulSoup(index_page.text).find('a', text='Logout'):
         logging.info("Already logged in.")
-        download_page = browser.get('https://www.onlinekiosk.de/index.php/customer/downloads.html')
+        download_page = browser.get(DOWNLOAD_URL)
     else:
         login_form = BeautifulSoup(index_page.text).find(id='login-dialog-form')
         csrf_field = login_form.find('input', type='hidden')
@@ -76,14 +77,6 @@ def main():
     if not os.path.isdir(args.output_directory):
         os.makedirs(args.output_directory)
 
-    list_headers = {
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Connection': 'keep-alive',
-      'Pragma': 'no-cache',
-      'Cache-Control': 'no-cache'
-    }
 
     # Download all issues:
     cd_re = re.compile('filename=(.*)') # Content-Disposition regex
@@ -97,13 +90,13 @@ def main():
         }
         list_data.update(form_data)
         logging.info('Asking for issues of "{}".'.format(name))
-        list_answer = browser.post(BASE_URL, data=list_data, headers=list_headers)
+        list_answer = browser.post_json(BASE_URL, data=list_data, referer=DOWNLOAD_URL)
         random_sleep()
         # Create output directory for product if it doesn't exist:
         product_directory = os.path.join(args.output_directory, name)
         if not os.path.isdir(product_directory):
             os.makedirs(product_directory)
-        for issue in list_answer.json()['result']:
+        for issue in list_answer['result']:
             random_sleep()
             issue_data = {
               'action': 'customer:gotoDownload',
@@ -111,7 +104,7 @@ def main():
               'id': issue['id']
             }
             issue_data.update(form_data)
-            issue_response = browser.post(BASE_URL, data=issue_data, stream=True)
+            issue_response = browser.post(BASE_URL, data=issue_data, stream=True, referer=DOWNLOAD_URL)
             try:
                 filename = cd_re.search(issue_response.headers['Content-Disposition']).group(1)
             except (IndexError, AttributeError, KeyError):
