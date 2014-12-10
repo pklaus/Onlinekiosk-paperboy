@@ -53,8 +53,6 @@ def main():
         logging.info("Already logged in.")
         download_page = browser.get('https://www.onlinekiosk.de/index.php/customer/downloads.html')
     else:
-        logging.info("Trying to log in.")
-
         login_form = BeautifulSoup(index_page.text).find(id='login-dialog-form')
         csrf_field = login_form.find('input', type='hidden')
         form_data = {csrf_field['name']: csrf_field['value']}
@@ -64,6 +62,7 @@ def main():
           'passwort': args.password
         }
         login_data.update(form_data)
+        logging.info("Trying to log in.")
         login_answer = browser.post('https://www.onlinekiosk.de/index.php/customer/login.html', data=login_data)
         random_sleep()
 
@@ -97,6 +96,7 @@ def main():
           'id': product['data-ok-id']
         }
         list_data.update(form_data)
+        logging.info('Asking for issues of "{}".'.format(name))
         list_answer = browser.post(BASE_URL, data=list_data, headers=list_headers)
         random_sleep()
         # Create output directory for product if it doesn't exist:
@@ -114,7 +114,7 @@ def main():
             issue_response = browser.post(BASE_URL, data=issue_data, stream=True)
             try:
                 filename = cd_re.search(issue_response.headers['Content-Disposition']).group(1)
-            except (IndexError, AttributeError):
+            except (IndexError, AttributeError, KeyError):
                 logging.warning('Something wrong with this issue: {} ?'.format(issue['title']))
                 issue_response.close()
                 continue
