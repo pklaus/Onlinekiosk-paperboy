@@ -22,8 +22,10 @@ from urllib.parse import urljoin
 import re
 
 
+HOME_URL = 'https://www.onlinekiosk.de/'
 BASE_URL = 'https://www.onlinekiosk.de/index.php'
-DOWNLOAD_URL = 'https://www.onlinekiosk.de/index.php/customer/downloads.html'
+LOGIN_URL = BASE_URL + '/customer/login.html'
+DOWNLOAD_URL = BASE_URL + '/customer/downloads.html'
 
 
 def main():
@@ -48,7 +50,7 @@ def main():
     browser = Browser(args.user_agent, os.path.expanduser(args.cookie_file))
 
     random_sleep()
-    index_page = browser.get('https://www.onlinekiosk.de/')
+    index_page = browser.get(HOME_URL)
     random_sleep()
     index_page = browser.get(BASE_URL)
     random_sleep()
@@ -57,7 +59,8 @@ def main():
         logging.info("Already logged in.")
         download_page = browser.get(DOWNLOAD_URL)
     else:
-        login_form = BeautifulSoup(index_page.text).find(id='login-dialog-form')
+        login_page = browser.get(LOGIN_URL)
+        login_form = BeautifulSoup(login_page.text).find(id='login-form')
         csrf_field = login_form.find('input', type='hidden')
         form_data = {csrf_field['name']: csrf_field['value']}
 
@@ -67,7 +70,7 @@ def main():
         }
         login_data.update(form_data)
         logging.info("Trying to log in.")
-        login_answer = browser.post('https://www.onlinekiosk.de/index.php/customer/login.html', data=login_data)
+        login_answer = browser.post(LOGIN_URL, data=login_data)
         random_sleep()
 
         if not BeautifulSoup(login_answer.text).find('a', text='Logout'):
