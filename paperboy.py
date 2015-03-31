@@ -66,7 +66,8 @@ def main():
 
         login_data = {
           'username': args.email,
-          'passwort': args.password
+          'passwort': args.password,
+          'action': 'customer:login'
         }
         login_data.update(form_data)
         logging.info("Trying to log in.")
@@ -78,6 +79,10 @@ def main():
             sys.exit(1)
 
         download_page = login_answer
+
+    login_form = BeautifulSoup(download_page.text).find(id='nav-search')
+    csrf_field = login_form.find('input', type='hidden')
+    form_data = {csrf_field['name']: csrf_field['value']}
 
     # Create output directory if it doesn't exist:
     if not os.path.isdir(args.output_directory):
